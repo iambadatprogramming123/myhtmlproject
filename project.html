@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<!-- code written entirely by chatgpt with a little updates lmao -->
+<html>
+<head>
+    <title>linkarchive.com</title>
+    <style>
+        .linkBox {
+            border: 1px solid #ccc;
+            padding: 10px;
+            margin: 10px 0;
+            background-color: #f5f5f5;
+        }
+        
+        .notification {
+            color: red;
+        }
+    </style>
+</head>
+<body>
+    <h1>Welcome to linkarchive.com</h1>
+    
+    <div id="loginContainer">
+        <label for="username">Enter your username: </label>
+        <input type="text" id="username">
+        <button onclick="login()">Login</button>
+    </div>
+    
+    <div id="linkContainer" style="display:none;">
+        <label for="link">Enter the link you want to share: </label>
+        <input type="text" id="link">
+        <button onclick="submitLink()">Submit</button>
+        
+        <h2>Links Shared:</h2>
+        <div id="linkList"></div>
+    </div>
+    
+    <h1 id="notification" class="notification" style="display:none;">A link posted by you was deleted.</h1>
+    
+    <script>
+        // Load existing links from localStorage
+        let links = JSON.parse(localStorage.getItem('links')) || [];
+        let deletedLinks = JSON.parse(localStorage.getItem('deletedLinks')) || [];
+        
+        function renderLinks() {
+            const linkList = document.getElementById("linkList");
+            linkList.innerHTML = '';
+            
+            links.forEach(linkData => {
+                const linkBox = document.createElement("div");
+                linkBox.className = "linkBox";
+                linkBox.innerHTML = `<strong>${linkData.username}:</strong> <a href="${linkData.link}">${linkData.link}</a>`;
+                
+                if (localStorage.getItem('username') === 'test' || linkData.username === localStorage.getItem('username')) {
+                    const deleteButton = document.createElement("button");
+                    deleteButton.innerText = "Delete";
+                    deleteButton.onclick = () => deleteLink(linkData);
+                    linkBox.appendChild(deleteButton);
+                }
+                
+                linkList.appendChild(linkBox);
+            });
+        }
+        
+        function login() {
+            const username = document.getElementById("username").value;
+            if (username) {
+                localStorage.setItem('username', username);
+                document.getElementById("loginContainer").style.display = "none";
+                document.getElementById("linkContainer").style.display = "block";
+                
+                // Check if user has a deleted link and show notification
+                const hasDeletedLink = deletedLinks.some(linkData => linkData.username === username);
+                if (hasDeletedLink) {
+                    document.getElementById("notification").style.display = "block";
+                    setTimeout(() => {
+                        document.getElementById("notification").style.display = "none";
+                    }, 1500); // Hide after 5 seconds
+                }
+                
+                renderLinks(); // Update the link list after logging in
+            }
+        }
+        
+        function submitLink() {
+            const username = localStorage.getItem('username');
+            const link = document.getElementById("link").value;
+            
+            if (link) {
+                links.push({ username, link });
+                localStorage.setItem('links', JSON.stringify(links));
+                renderLinks(); // Update the link list after submitting
+            }
+        }
+        
+        function deleteLink(linkData) {
+            const index = links.indexOf(linkData);
+            const loggedInUsername = localStorage.getItem('username');
+            
+            if (index !== -1 && (loggedInUsername === 'test' || linkData.username === loggedInUsername)) {
+                deletedLinks.push(linkData);
+                localStorage.setItem('deletedLinks', JSON.stringify(deletedLinks));
+
+                links.splice(index, 1);
+                localStorage.setItem('links', JSON.stringify(links));
+                renderLinks(); // Update the link list after deleting
+
+                // Check if deleted link belongs to current user and show notification
+                if (linkData.username === loggedInUsername) {
+                    document.getElementById("notification").style.display = "block";
+                    setTimeout(() => {
+                        document.getElementById("notification").style.display = "none";
+                    }, 1500); // Hide after 5 seconds
+                }
+            }
+        }
+        
+        const storedUsername = localStorage.getItem('username');
+        if (storedUsername) {
+            document.getElementById("loginContainer").style.display = "none";
+            document.getElementById("linkContainer").style.display = "block";
+            
+            // Check if user has a deleted link and show notification
+            const hasDeletedLink = deletedLinks.some(linkData => linkData.username === storedUsername);
+            if (hasDeletedLink) {
+                document.getElementById("notification").style.display = "block";
+                setTimeout(() => {
+                    document.getElementById("notification").style.display = "none";
+                }, 1500); // Hide after 5 seconds
+            }
+            
+            renderLinks(); // Update the link list for the logged-in user
+        }
+    </script>
+</body>
+</html>
